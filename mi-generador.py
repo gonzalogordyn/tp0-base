@@ -39,6 +39,7 @@ def generate_compose_yaml(num_clients):
 
 
 if __name__ == "__main__":
+    
     if len(sys.argv) != 3:
         print("Uso: python3 mi-generador.py <nombre_archivo> <cantidad_clientes>")
         sys.exit(1)
