@@ -50,3 +50,4 @@ if __name__ == "__main__":
     compose_yaml = generate_compose_yaml(num_clients)
     with open(output_filename, 'w') as f:
         f.write(compose_yaml)
+    sys.exit(0)
