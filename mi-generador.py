@@ -13,7 +13,7 @@ def generate_compose_yaml(num_clients):
                 'entrypoint': 'python3 /main.py',
                 'environment': ['PYTHONUNBUFFERED=1', 'LOGGING_LEVEL=DEBUG'],
                 'networks': ['testing_net'],
-                'volumes': [{'type': 'bind', 'source': './server/config.ini', 'target': '/server/config.ini'}]
+                'volumes': [{'type': 'bind', 'source': './server/config.ini', 'target': '/config.ini'}]
             }
         },
         'networks': {
@@ -34,7 +34,7 @@ def generate_compose_yaml(num_clients):
             'environment': [f'CLI_ID={i}', 'CLI_LOG_LEVEL=DEBUG'],
             'networks': ['testing_net'],
             'depends_on': ['server'],
-            'volumes': [{'type': 'bind', 'source': './client/config.yaml', 'target': '/client/config.yaml'}]
+            'volumes': [{'type': 'bind', 'source': './client/config.yaml', 'target': '/config.yaml'}]
         }
 
     return yaml.dump(compose_data, default_flow_style=False)
