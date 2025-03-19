@@ -11,7 +11,7 @@ def generate_compose_yaml(num_clients):
                 'container_name': 'server',
                 'image': 'server:latest',
                 'entrypoint': 'python3 /main.py',
-                'environment': ['PYTHONUNBUFFERED=1', 'LOGGING_LEVEL=DEBUG'],
+                'environment': ['PYTHONUNBUFFERED=1'],
                 'networks': ['testing_net'],
                 'volumes': [{'type': 'bind', 'source': './server/config.ini', 'target': '/config.ini'}]
             }
@@ -31,7 +31,7 @@ def generate_compose_yaml(num_clients):
             'container_name': f'client{i}',
             'image': 'client:latest',
             'entrypoint': '/client',
-            'environment': [f'CLI_ID={i}', 'CLI_LOG_LEVEL=DEBUG'],
+            'environment': [f'CLI_ID={i}'],
             'networks': ['testing_net'],
             'depends_on': ['server'],
             'volumes': [{'type': 'bind', 'source': './client/config.yaml', 'target': '/config.yaml'}]
