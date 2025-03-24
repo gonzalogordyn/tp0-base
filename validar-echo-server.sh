@@ -8,10 +8,6 @@ SERVER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}
 
 RESPONSE=$(docker run --rm --network container:$SERVER_CONTAINER alpine sh -c "echo \"$MSG\" | nc -w 5 localhost $PORT | tr -d '\r\n'")
 
-echo "Respuesta: '$RESPONSE'"
-echo "Expected: '$MSG'"
-
-
 if [ "$RESPONSE" = "$MSG" ]; then
     echo "action: test_echo_server | result: success"
 else
