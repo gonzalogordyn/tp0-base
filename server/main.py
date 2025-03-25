@@ -4,6 +4,8 @@ from configparser import ConfigParser
 from common.server import Server
 import logging
 import os
+import sys
+import signal
 
 
 def initialize_config():
@@ -33,6 +35,12 @@ def initialize_config():
 
     return config_params
 
+def signal_handler(sig, frame):
+    logging.info('[SIGTERM] Cerrando servidor...')
+    server.graceful_shutdown()
+    logging.info('Servidor cerrado.')
+    sys.exit(0)
+
 
 def main():
     config_params = initialize_config()
@@ -48,7 +56,11 @@ def main():
                   f"listen_backlog: {listen_backlog} | logging_level: {logging_level}")
 
     # Initialize server and start server loop
+    global server
     server = Server(port, listen_backlog)
+
+    signal.signal(signal.SIGTERM, signal_handler)
+    
     server.run()
 
 def initialize_log(logging_level):
