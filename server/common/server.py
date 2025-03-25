@@ -61,7 +61,7 @@ class Server:
         logging.info("Cerrando servidor...")
         
         if self._client_socket:
-            logging.info(f"Cerrando socket: {self._client_socket.getpeername()}")
+            logging.info(f"Cerrando socket de cliente")
             self._client_socket.close()
         
         logging.info("Cerrando socket del servidor")
