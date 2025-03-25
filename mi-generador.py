@@ -31,7 +31,7 @@ def generate_compose_yaml(num_clients):
             'container_name': f'client{i}',
             'image': 'client:latest',
             'entrypoint': '/client',
-            'environment': [f'CLI_ID={i}'],
+            'environment': [f'CLI_ID={i}', 'NOMBRE=Nombre', 'APELLIDO=Apellido', 'DOCUMENTO=12345678', 'NACIMIENTO=01-01-1950', 'NUMERO=1234'],
             'networks': ['testing_net'],
             'depends_on': ['server'],
             'volumes': [{'type': 'bind', 'source': './client/config.yaml', 'target': '/config.yaml'}]
