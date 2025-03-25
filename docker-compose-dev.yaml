@@ -12,7 +12,7 @@ services:
     volumes:
       - type: bind
         source: ./server/config.ini
-        target: /server/config.ini
+        target: /config.ini
 
   client1:
     container_name: client1
@@ -28,7 +28,7 @@ services:
     volumes:
       - type: bind
         source: ./client/config.yaml
-        target: /client/config.yaml
+        target: /config.yaml
 
 networks:
   testing_net:
