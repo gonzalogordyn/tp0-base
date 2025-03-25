@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/op/go-logging"
@@ -14,6 +16,16 @@ import (
 )
 
 var log = logging.MustGetLogger("log")
+var client *common.Client
+
+func signalHandler(sig os.Signal) {
+	log.Infof("[SIGTERM] Cerrando cliente..")
+	if client != nil {
+		client.GracefulShutdown()
+	}
+	log.Info("Cliente cerrado.")
+	os.Exit(0)
+}
 
 // InitConfig Function that uses viper library to parse configuration parameters.
 // Viper is configured to read variables from both environment variables and the
@@ -111,5 +123,13 @@ func main() {
 	}
 
 	client := common.NewClient(clientConfig)
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+		signalHandler(sig)
+	}()
+
 	client.StartClientLoop()
 }
