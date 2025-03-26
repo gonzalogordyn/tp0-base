@@ -29,6 +29,7 @@ El formato de los paquetes es el siguiente.
 
 | **field**             	| **bytes**          	|
 |-----------------------	|--------------------	|
+| packet_length            	| [fijo] 2 bytes      	|
 | nombre_length_bytes   	| [fijo] 1 byte      	|
 | nombre_bytes          	| [variable] max 120 	|
 | apellido_length_bytes 	| [fijo] 1 byte      	|
@@ -41,4 +42,7 @@ El formato de los paquetes es el siguiente.
 Consta de dos campos variables, cuyo tamaño máximo será de 120 bytes al ser caracteres encodeados en UTF-8 que varían entre 1-4 bytes, y se ha impuesto un límite de 30 caracteres para estos. Se cuenta para los mismos con dos campos que especifican sus longitudes en bytes, para permitir la correcta lectura y decodificación a strings. Estos serán fijos en 1 byte, ya que alcanza para representar una longitud de hasta 255.  
 Para el caso del nacimiento, al ser 10 caracteres que se encuentran dentro del rango ASCII, su tamaño será fijo de 10 bytes.  
 Para el documento y número, determiné que 4 bytes eran más suficiente para representarlos.
-Esto nos dejaría con un paquete de un tamaño máximo de 260 bytes.  
+Además, hay un campo de la longitud del payload del paquete, para asegurarse de que se lea todo el contenido y evitar short reads y writes.
+Esto nos dejaría con un paquete de un tamaño máximo de 260 bytes.
+
+El servidor recibirá un mensaje con el formato especificado, y luego de almacenar la apuesta responderá con un mensaje de la forma `ACK{NUMERO_APUESTA}`, donde el número sera un campo fijo de 4 bytes. Es decir que esta respuesta tendrá un tamaño de 7 bytes.

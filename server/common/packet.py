@@ -26,11 +26,15 @@ class Packet:
         # Documento y numero a bytes
         documento_bytes = self.documento.to_bytes(4, byteorder='big', signed=False)
         numero_bytes = self.numero.to_bytes(4, byteorder='big', signed=False)
+
+        payload = nombre_length_bytes + nombre_bytes + apellido_length_bytes + apellido_bytes + nacimiento_bytes + documento_bytes + numero_bytes
+        payload_length = len(payload).to_bytes(2, byteorder='big', signed=False)
         
-        return nombre_length_bytes + nombre_bytes + apellido_length_bytes + apellido_bytes + nacimiento_bytes + documento_bytes + numero_bytes
+        return payload_length + payload
 
     @classmethod
     def deserialize(cls, byte_data):
+        byte_data = byte_data[2:]
         
         # Lectura de nombre
         nombre_length_bytes = int.from_bytes(byte_data[0:1], byteorder='big', signed=False)

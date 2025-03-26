@@ -1,7 +1,8 @@
 import socket
 import logging
 import signal
-
+from packet import Packet
+from utils import *
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -24,6 +25,28 @@ class Server:
             self._client_socket = self.__accept_new_connection()
             self.__handle_client_connection()
 
+    def __recv_all_bytes(self):
+        packet_length_bytes = self._client_socket.recv(2)
+        packet_length = int.from_bytes(packet_length_bytes, byteorder='big', signed=False)
+        
+        packet_bytes = b''
+        while len(packet_bytes) < packet_length:
+            received = self._client_socket.recv(packet_length - len(packet_bytes))
+            if not received:
+                return packet_bytes
+            packet_bytes += received
+        return packet_bytes
+
+    def __write_all_bytes(self, data):
+        sent_bytes = 0
+        while sent_bytes < len(data):
+            sent = self._client_socket.send(data[sent_bytes:])
+            if sent == 0:
+                logging.error("Error al enviar datos")
+                return
+            sent_bytes += sent
+        return
+
     def __handle_client_connection(self):
         """
         Read message from a specific client socket and closes the socket
@@ -32,12 +55,19 @@ class Server:
         client socket will also be closed
         """
         try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = self._client_socket.recv(1024).rstrip().decode('utf-8')
-            addr = self._client_socket.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            # TODO: Modify the send to avoid short-writes
-            self._client_socket.send("{}\n".format(msg).encode('utf-8'))
+            received_bytes = self.__recv_all_bytes()
+            packet = Packet.deserialize(received_bytes)
+            
+            bet = Bet(0, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
+            store_bets([bet])
+            logging.info(f'action: apuesta_almacenada | result: success | dni: {packet.documento} | numero: {packet.numero}')
+            
+            # Creo la respuesta
+            response = b''
+            response += "ACK".encode('utf-8')
+            response += packet.numero.to_bytes(4, byteorder='big', signed=False)
+
+            self.__write_all_bytes(response)
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
