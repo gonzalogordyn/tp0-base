@@ -1,11 +1,9 @@
 package common
 
 import (
-	"encoding/binary"
+	"fmt"
 	"io"
 	"net"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/op/go-logging"
@@ -15,10 +13,11 @@ var log = logging.MustGetLogger("log")
 
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
-	ID            string
-	ServerAddress string
-	LoopAmount    int
-	LoopPeriod    time.Duration
+	ID             string
+	ServerAddress  string
+	LoopAmount     int
+	LoopPeriod     time.Duration
+	BatchMaxAmount int
 }
 
 // Client Entity that encapsulates how
@@ -93,68 +92,43 @@ func (c *Client) ReadAllBytes(n int) ([]byte, error) {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
-	// There is an autoincremental msgID to identify every message sent
-	// Messages if the message amount threshold has not been surpassed
-	// Create the connection the server in every loop iteration. Send an
+
+	bets, err := ReadBets(fmt.Sprintf("/data/agency-%s.csv", c.config.ID))
+	if err != nil {
+		log.Errorf("error leyendo apuestas")
+	}
+
+	batches, err := CreateBatches(bets, c.config.BatchMaxAmount)
+	if err != nil {
+		log.Errorf("error creando batches")
+	}
+
 	c.createClientSocket()
-	nombre := os.Getenv("NOMBRE")
-	apellido := os.Getenv("APELLIDO")
-	nacimiento := os.Getenv("NACIMIENTO")
-	documentoStr := os.Getenv("DOCUMENTO")
-	numeroStr := os.Getenv("NUMERO")
 
-	documento, err := strconv.ParseUint(documentoStr, 10, 32)
-	if err != nil {
-		log.Errorf("error parseando documento")
-	}
-	numero, err := strconv.ParseUint(numeroStr, 10, 32)
-	if err != nil {
-		log.Errorf("error parseando numero")
-	}
+	for _, batch := range batches {
+		// Escribo con funcion auxiliar para evitar short write
+		err = c.WriteAllBytes(batch)
+		if err != nil {
+			log.Errorf("error enviando paquete")
+			return
+		}
 
-	// Creo el paquete
-	packet, err := NewPacket(nombre, apellido, nacimiento, uint32(documento), uint32(numero))
-	if err != nil {
-		log.Errorf("error creando paquete")
-	}
+		// Lectura de la response con funcion auxiliar para evitar short read
+		msg, err := c.ReadAllBytes(7)
+		if err != nil {
+			log.Errorf("error recibiendo respuesta")
+			return
+		}
 
-	log.Infof("packet: %v", packet)
+		if len(msg) != 7 || string(msg[:3]) != "ACK" {
+			log.Errorf("error recibiendo respuesta")
+			return
+		}
 
-	// Lo serializo a bytes
-	packetBytes, err := packet.Serialize()
-	if err != nil {
-		log.Errorf("error serializando paquete")
-	}
-
-	log.Infof("packetBytes: %x", packetBytes)
-
-	// Escribo con funcion auxiliar para evitar short write
-	err = c.WriteAllBytes(packetBytes)
-	if err != nil {
-		log.Errorf("error enviando paquete")
-	}
-
-	// Lectura de la response con funcion auxiliar para evitar short read
-	msg, err := c.ReadAllBytes(7)
-	if err != nil {
-		log.Errorf("error recibiendo respuesta")
-	}
-
-	if len(msg) != 7 || string(msg[:3]) != "ACK" {
-		log.Errorf("error recibiendo respuesta")
-		return
-	}
-
-	receivedNumero := binary.BigEndian.Uint32(msg[3:])
-	if receivedNumero != packet.Numero {
-		log.Errorf("numero incorrecto, esperado: %d, recibido: %d", packet.Numero, receivedNumero)
-		return
+		log.Infof("action: batch_enviado | result: success | batch_size: %d", len(batch))
 	}
 
 	c.conn.Close()
 
-	log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
-		packet.Documento,
-		packet.Numero,
-	)
+	log.Infof("action: apuestas_enviadas | result: success | dni: %v | numero: %v")
 }

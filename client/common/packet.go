@@ -84,3 +84,23 @@ func Deserialize(data_bytes []byte) (*Packet, error) {
 
 	return &Packet{nombre, apellido, nacimiento, documento, numero}, nil
 }
+
+func (packet *Packet) Size() int {
+	nombreBytes := []byte(packet.Nombre)
+	apellidoBytes := []byte(packet.Apellido)
+	nacimientoBytes := []byte(packet.Nacimiento)
+
+	// Size of the length fields (1 byte each for nombre and apellido)
+	size := len(nombreBytes) + len(apellidoBytes) + len(nacimientoBytes)
+
+	// Bytes de longitud de nombre y apellido
+	size += 1 + 1
+
+	// Bytes de documento y numero
+	size += 4 + 4
+
+	// Bytes de longitud del payload
+	size += 2
+
+	return size
+}
