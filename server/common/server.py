@@ -32,7 +32,7 @@ class Server:
         packet_length = int.from_bytes(packet_length_bytes, byteorder='big', signed=False)
         
         while len(packet_bytes) - 2 < packet_length:
-            received = self._client_socket.recv(packet_length - len(packet_bytes))
+            received = self._client_socket.recv(packet_length - len(packet_bytes) + 2)
             if not received:
                 return packet_bytes
             packet_bytes += received
