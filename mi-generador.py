@@ -34,7 +34,7 @@ def generate_compose_yaml(num_clients):
             'environment': [f'CLI_ID={i}', 'NOMBRE=Nombre', 'APELLIDO=Apellido', 'DOCUMENTO=12345678', 'NACIMIENTO=1950-01-01', 'NUMERO=1234'],
             'networks': ['testing_net'],
             'depends_on': ['server'],
-            'volumes': [{'type': 'bind', 'source': './client/config.yaml', 'target': '/config.yaml'}]
+            'volumes': [{'type': 'bind', 'source': './client/config.yaml', 'target': '/config.yaml'}, {'type': 'bind', 'source': f'./.data/agency-{i}.csv', 'target': f'/.data/agency-{i}.csv'}]
         }
 
     return yaml.dump(compose_data, default_flow_style=False)
