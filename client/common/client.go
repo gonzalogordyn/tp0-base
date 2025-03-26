@@ -124,6 +124,8 @@ func (c *Client) StartClientLoop() {
 		log.Errorf("error serializando paquete")
 	}
 
+	log.Infof(("packetBytes: %v"), packetBytes)
+
 	// Escribo con funcion auxiliar para evitar short write
 	err = c.WriteAllBytes(packetBytes)
 	if err != nil {
