@@ -2,6 +2,7 @@ import socket
 import logging
 import signal
 from common.packet import Packet
+from common.batch import Batch
 from common.utils import *
 
 class Server:
@@ -58,16 +59,17 @@ class Server:
         try:
             received_bytes = self.__recv_all_bytes()
             logging.info(f'Received bytes: {received_bytes}')
-            packet = Packet.deserialize(received_bytes)
-            
-            bet = Bet(0, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
-            store_bets([bet])
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {packet.documento} | numero: {packet.numero}')
+            batch = Batch.deserialize(received_bytes)
+
+            for packet in batch.packets:
+                bet = Bet(0, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
+                store_bets([bet])
+                logging.info(f'action: apuesta_almacenada | result: success | dni: {packet.documento} | numero: {packet.numero}')
             
             # Creo la respuesta
             response = b''
             response += "ACK".encode('utf-8')
-            response += packet.numero.to_bytes(4, byteorder='big', signed=False)
+            # response += packet.numero.to_bytes(4, byteorder='big', signed=False)
 
             self.__write_all_bytes(response)
         except OSError as e:

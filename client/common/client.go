@@ -114,13 +114,13 @@ func (c *Client) StartClientLoop() {
 		}
 
 		// Lectura de la response con funcion auxiliar para evitar short read
-		msg, err := c.ReadAllBytes(7)
+		msg, err := c.ReadAllBytes(3)
 		if err != nil {
 			log.Errorf("error recibiendo respuesta")
 			return
 		}
 
-		if len(msg) != 7 || string(msg[:3]) != "ACK" {
+		if len(msg) != 3 || string(msg[:3]) != "ACK" {
 			log.Errorf("error recibiendo respuesta")
 			return
 		}
