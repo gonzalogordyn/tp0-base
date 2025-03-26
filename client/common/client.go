@@ -118,13 +118,13 @@ func (c *Client) StartClientLoop() {
 		log.Errorf("error creando paquete")
 	}
 
+	log.Infof("packet: %v", packet)
+
 	// Lo serializo a bytes
 	packetBytes, err := packet.Serialize()
 	if err != nil {
 		log.Errorf("error serializando paquete")
 	}
-
-	log.Infof(("packetBytes: %v"), packetBytes)
 
 	// Escribo con funcion auxiliar para evitar short write
 	err = c.WriteAllBytes(packetBytes)
