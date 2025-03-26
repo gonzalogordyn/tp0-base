@@ -31,9 +31,6 @@ func (packet *Packet) Serialize() ([]byte, error) {
 	apellidoBytes := []byte(packet.Apellido)
 	nacimientoBytes := []byte(packet.Nacimiento)
 
-	log.Infof("nombreBytes: %v", nombreBytes)
-	log.Infof("apellidoBytes: %v", apellidoBytes)
-	log.Infof("nacimientoBytes: %v", nacimientoBytes)
 	buf.WriteByte(byte(len(nombreBytes)))
 	buf.Write(nombreBytes)
 
