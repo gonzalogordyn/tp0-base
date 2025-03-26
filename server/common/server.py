@@ -26,10 +26,11 @@ class Server:
             self.__handle_client_connection()
 
     def __recv_all_bytes(self):
+        packet_bytes = b''
         packet_length_bytes = self._client_socket.recv(2)
+        packet_bytes += packet_length_bytes
         packet_length = int.from_bytes(packet_length_bytes, byteorder='big', signed=False)
         
-        packet_bytes = b''
         while len(packet_bytes) < packet_length:
             received = self._client_socket.recv(packet_length - len(packet_bytes))
             if not received:
