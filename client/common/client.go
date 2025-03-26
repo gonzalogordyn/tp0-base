@@ -93,7 +93,7 @@ func (c *Client) ReadAllBytes(n int) ([]byte, error) {
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
 
-	bets, err := ReadBets(fmt.Sprintf("/data/agency-%s.csv", c.config.ID))
+	bets, err := ReadBets(fmt.Sprintf("/.data/agency-%s.csv", c.config.ID))
 	if err != nil {
 		log.Errorf("error leyendo apuestas")
 	}
