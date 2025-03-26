@@ -56,8 +56,8 @@ class Server:
         """
         try:
             received_bytes = self.__recv_all_bytes()
-            packet = Packet.deserialize(received_bytes)
             logging.info(f'Received bytes: {received_bytes}')
+            packet = Packet.deserialize(received_bytes)
             
             bet = Bet(0, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
             store_bets([bet])
