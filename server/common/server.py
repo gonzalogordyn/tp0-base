@@ -21,6 +21,7 @@ class Server:
 
         try:
             self.num_agencias = int(os.getenv("AGENCIAS", 5))
+            logging.debug(f"Cantidad de agencias: {self.num_agencias}")
         except ValueError:
             logging.error("Valor inválido.")
             raise
