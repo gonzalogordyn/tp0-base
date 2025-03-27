@@ -134,3 +134,5 @@ Con este header, es posible leer paquete por paquete de a bytes (valiéndose de 
 El cliente envía de a un batch y espera a una respuesta por parte del servidor que llega cuando termina de procesar todas sus apuestas.
 Al finalizar, el servidor loggea la cantidad de apuestas procesadas correctamente en un mensaje.   
 En caso de que ocurra un error en el procesamiento, loggeará un mensaje de error con la cantidad de apuestas fallidas. A su vez, enviará un mensaje "ERR" al cliente que envió el batch.
+
+La cantidad de paquetes que entren en un batch está definida por el archivo de configuración. La totalidad de estos paquetes, junto con los dos bytes del header del batch, no excederán los 8kb. Si esto ocurre, el paquete que no entre será pasado en un nuevo batch.
