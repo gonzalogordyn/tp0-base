@@ -28,6 +28,94 @@ services:
     - source: ./.data/agency-1.csv
       target: /.data/agency-1.csv
       type: bind
+  client2:
+    container_name: client2
+    depends_on:
+    - server
+    entrypoint: /client
+    environment:
+    - CLI_ID=2
+    - NOMBRE=Nombre
+    - APELLIDO=Apellido
+    - DOCUMENTO=12345678
+    - NACIMIENTO=1950-01-01
+    - NUMERO=1234
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - source: ./client/config.yaml
+      target: /config.yaml
+      type: bind
+    - source: ./.data/agency-2.csv
+      target: /.data/agency-2.csv
+      type: bind
+  client3:
+    container_name: client3
+    depends_on:
+    - server
+    entrypoint: /client
+    environment:
+    - CLI_ID=3
+    - NOMBRE=Nombre
+    - APELLIDO=Apellido
+    - DOCUMENTO=12345678
+    - NACIMIENTO=1950-01-01
+    - NUMERO=1234
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - source: ./client/config.yaml
+      target: /config.yaml
+      type: bind
+    - source: ./.data/agency-3.csv
+      target: /.data/agency-3.csv
+      type: bind
+  client4:
+    container_name: client4
+    depends_on:
+    - server
+    entrypoint: /client
+    environment:
+    - CLI_ID=4
+    - NOMBRE=Nombre
+    - APELLIDO=Apellido
+    - DOCUMENTO=12345678
+    - NACIMIENTO=1950-01-01
+    - NUMERO=1234
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - source: ./client/config.yaml
+      target: /config.yaml
+      type: bind
+    - source: ./.data/agency-4.csv
+      target: /.data/agency-4.csv
+      type: bind
+  client5:
+    container_name: client5
+    depends_on:
+    - server
+    entrypoint: /client
+    environment:
+    - CLI_ID=5
+    - NOMBRE=Nombre
+    - APELLIDO=Apellido
+    - DOCUMENTO=12345678
+    - NACIMIENTO=1950-01-01
+    - NUMERO=1234
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - source: ./client/config.yaml
+      target: /config.yaml
+      type: bind
+    - source: ./.data/agency-5.csv
+      target: /.data/agency-5.csv
+      type: bind
   server:
     container_name: server
     entrypoint: python3 /main.py

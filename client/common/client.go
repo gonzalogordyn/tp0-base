@@ -1,15 +1,19 @@
 package common
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("log")
+
+const NOTIFICATION = 9000
 
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
@@ -50,7 +54,13 @@ func (c *Client) createClientSocket() error {
 	c.conn = conn
 
 	// Envio id del cliente
-	err = c.WriteAllBytes([]byte(c.config.ID))
+	idInt, err := strconv.Atoi(c.config.ID)
+	if err != nil {
+		log.Errorf("error convirtiendo id de cliente a int")
+		c.conn.Close()
+	}
+	idByte := byte(idInt)
+	err = c.WriteAllBytes([]byte{idByte})
 	if err != nil {
 		log.Errorf("error enviando id de cliente")
 		c.conn.Close()
@@ -100,6 +110,54 @@ func (c *Client) ReadAllBytes(n int) ([]byte, error) {
 	return data, nil
 }
 
+func (c *Client) WaitForWinners() {
+	// Lectura del header
+	header, err := c.ReadAllBytes(4)
+	if err != nil {
+		log.Errorf("error recibiendo header del paquete")
+		return
+	}
+
+	// Primeros 2 bytes son el codigo (9001)
+	code := binary.BigEndian.Uint16(header[:2])
+	if code != WinnersCode {
+		log.Errorf("error: código inesperado %d, esperado %d", code, WinnersCode)
+		return
+	}
+
+	// Proximos 2 bytes son el tamaño del payload en bytes
+	payloadLength := binary.BigEndian.Uint16(header[2:4])
+
+	// Lectura del payload
+	payload, err := c.ReadAllBytes(int(payloadLength))
+	if err != nil {
+		log.Errorf("error recibiendo payload del paquete")
+		return
+	}
+
+	// Deserializacion del paquete de ganadores
+	winnersPacket, err := DeserializeWinnersPacket(append(header, payload...))
+	if err != nil {
+		log.Errorf("error deserializando paquete de ganadores")
+		return
+	}
+
+	// Log the winners
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d", len(winnersPacket.Winners))
+}
+
+func (c *Client) SendNotification() {
+	notificationBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(notificationBytes, NOTIFICATION)
+	err := c.WriteAllBytes(notificationBytes)
+	if err != nil {
+		log.Errorf("error enviando notificación al servidor: %v", err)
+		return
+	}
+
+	log.Infof("action: notificacion_enviada | result: success")
+}
+
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
 	log.Infof("Lectura de csv")
@@ -139,8 +197,7 @@ func (c *Client) StartClientLoop() {
 
 		log.Infof("action: batch_enviado | result: success | batch_size: %d", len(batch))
 	}
-
+	c.SendNotification()
+	c.WaitForWinners()
 	c.conn.Close()
-
-	log.Infof("action: apuestas_enviadas | result: success")
 }
