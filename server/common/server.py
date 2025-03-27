@@ -16,12 +16,12 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._clients = {}
-        self.__notified = 0
-        self.__ganadores = {str(i): [] for i in range(1, 6)}
+        self._notified = 0
+        self._ganadores = {str(i): [] for i in range(1, 6)}
 
         try:
-            self.num_agencias = int(os.getenv("AGENCIAS", 5))
-            logging.debug(f"Cantidad de agencias: {self.num_agencias}")
+            self._num_agencias = int(os.getenv("AGENCIAS", 5))
+            logging.debug(f"Cantidad de agencias: {self._num_agencias}")
         except ValueError:
             logging.error("Valor inválido.")
             raise
@@ -48,7 +48,7 @@ class Server:
         # logging.debug(f"action: receive_message | length: {packet_length}")
 
         if packet_length == self.NOTIFY_FINISHED:
-            # logging.info(f"action: Recibió un finished")
+            logging.debug(f"action: Recibió un finished")
             return packet_bytes, "FINISHED"
         
         while len(packet_bytes) - 2 < packet_length:
@@ -69,8 +69,8 @@ class Server:
         return
     
     def __handle_notificaciones(self):
-        self.__notified += 1
-        if self.__notified == 5:
+        self._notified += 1
+        if self._notified == self._num_agencias:
             logging.info("action: sorteo | result: success")
             self.__handle_sorteo()
 
@@ -79,9 +79,9 @@ class Server:
         for bet in bets:
             if has_won(bet):
                 agency_key = str(bet.agency)
-                self.__ganadores[agency_key].append(bet.document)
+                self._ganadores[agency_key].append(bet.document)
 
-        for agency, winners in self.__ganadores.items():
+        for agency, winners in self._ganadores.items():
             winners_packet = WinnersPacket(winners)
             winners_bytes = winners_packet.serialize()
             self.__write_all_bytes(winners_bytes, agency)
