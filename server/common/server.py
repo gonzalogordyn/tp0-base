@@ -1,3 +1,4 @@
+import os
 import socket
 import logging
 import signal
@@ -8,6 +9,7 @@ from common.winners_packet import WinnersPacket
 
 class Server:
     NOTIFY_FINISHED = 9000
+
     def __init__(self, port, listen_backlog):
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -16,6 +18,12 @@ class Server:
         self._clients = {}
         self.__notified = 0
         self.__ganadores = {str(i): [] for i in range(1, 6)}
+
+        try:
+            self.num_agencias = int(os.getenv("AGENCIAS", 5))
+        except ValueError:
+            logging.error("Valor inválido.")
+            raise
 
     def run(self):
         """

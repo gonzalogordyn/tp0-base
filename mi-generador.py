@@ -11,7 +11,7 @@ def generate_compose_yaml(num_clients):
                 'container_name': 'server',
                 'image': 'server:latest',
                 'entrypoint': 'python3 /main.py',
-                'environment': ['PYTHONUNBUFFERED=1'],
+                'environment': ['PYTHONUNBUFFERED=1', f'AGENCIAS={num_clients}'],
                 'networks': ['testing_net'],
                 'volumes': [{'type': 'bind', 'source': './server/config.ini', 'target': '/config.ini'}]
             }
