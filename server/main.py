@@ -69,6 +69,7 @@ def main():
     with Manager() as manager:
         ganadores = manager.dict({str(i): manager.list() for i in range(1, num_agencias + 1)})
         server = Server(port, listen_backlog, ganadores)
+        signal.signal(signal.SIGTERM, signal_handler)
         server.run()
     
 
