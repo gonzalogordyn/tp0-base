@@ -12,7 +12,7 @@ import sys
 class Server:
     NOTIFY_FINISHED = 9000
 
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, ganadores):
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.settimeout(1)
@@ -21,14 +21,13 @@ class Server:
         self._clients = {}
         self._queue = Queue()
         self._notified = Value('i', 0)
+        self._ganadores = ganadores
 
         try:
             self._num_agencias = int(os.getenv("AGENCIAS", 5))
         except ValueError:
             logging.error("Valor inválido.")
             raise
-        with Manager() as manager:
-            self._ganadores = manager.dict({str(i): [] for i in range(1, self._num_agencias + 1)})
 
         self._lock = Lock()
 
@@ -54,7 +53,9 @@ class Server:
         for agency, winners in self._ganadores.items():
             winners_packet = WinnersPacket(winners)
             winners_bytes = winners_packet.serialize()
-            self.__write_all_bytes(winners_bytes, agency)
+
+            agency_socket = self._clients.get(agency)
+            self.__write_all_bytes(winners_bytes, agency_socket)
         
         self.graceful_shutdown()
         

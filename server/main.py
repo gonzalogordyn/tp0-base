@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import signal
+from multiprocessing import Manager
 
 
 def initialize_config():
@@ -57,11 +58,11 @@ def main():
 
     # Initialize server and start server loop
     global server
-    server = Server(port, listen_backlog)
-
-    signal.signal(signal.SIGTERM, signal_handler)
+    with Manager() as manager:
+        ganadores = manager.dict({str(i): [] for i in range(1, 6)})  # Replace 6 with the number of agencies
+        server = Server(port, listen_backlog, ganadores)
+        server.run()
     
-    server.run()
 
 def initialize_log(logging_level):
     """
