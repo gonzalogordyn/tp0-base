@@ -84,6 +84,8 @@ class Server:
             winners_packet = WinnersPacket(winners)
             winners_bytes = winners_packet.serialize()
             self.__write_all_bytes(winners_bytes, agency)
+        
+        self.graceful_shutdown()
 
 
     def __handle_client_connection(self, client_id):
@@ -96,20 +98,20 @@ class Server:
         try:
             while True:
                 received_bytes, status = self.__recv_all_bytes(client_id)
-                logging.info(f'Received bytes: {received_bytes}')
+                # logging.info(f'Received bytes: {received_bytes}')
 
                 if status == "FINISHED":
-                    logging.info("action: notificacion | result: success")
+                    # logging.info("action: notificacion | result: success")
                     self.__handle_notificaciones()
                     break
                 else:
                     batch, failed_packets = Batch.deserialize(received_bytes)
-                    logging.info(f'Batch: {batch.packets}')
+                    # logging.info(f'Batch: {batch.packets}')
                     
                     for packet in batch.packets:
                         bet = Bet(client_id, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
                         store_bets([bet])
-                        logging.info(f'action: apuesta_almacenada | result: success | client: {client_id} |  nombre: {packet.nombre} {packet.apellido} | dni: {packet.documento} | numero: {packet.numero}')
+                        # logging.info(f'action: apuesta_almacenada | result: success | client: {client_id} |  nombre: {packet.nombre} {packet.apellido} | dni: {packet.documento} | numero: {packet.numero}')
                     
 
                     if failed_packets > 0:
@@ -142,23 +144,23 @@ class Server:
         client_id_bytes = c.recv(1)
         client_id = int.from_bytes(client_id_bytes, byteorder='big', signed=False)
         client_id_str = str(client_id)
-        logging.info(f'id: {client_id_str}')
+        # logging.info(f'id: {client_id_str}')
         
         self._clients[client_id_str] = c
 
         return client_id_str
     
     def graceful_shutdown(self):
-        logging.info("Cerrando servidor...")
+        logging.debug("Cerrando servidor...")
         
         for client_id, client_socket in self._clients.items():
             try:
-                logging.info(f"Cerrando socket del cliente con ID: {client_id}")
+                logging.debug(f"Cerrando socket del cliente con ID: {client_id}")
                 client_socket.close()
             except Exception as e:
                 logging.error(f"Error cerrando socket del cliente con ID: {client_id} | Error: {e}")
         
         self._clients.clear()
 
-        logging.info("Cerrando socket del servidor")
+        logging.debug("Cerrando socket del servidor")
         self._server_socket.close()
