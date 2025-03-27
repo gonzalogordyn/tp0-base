@@ -3,7 +3,7 @@ package common
 import "encoding/binary"
 
 func CreateBatches(bets []Packet, maxAmount int) ([][]byte, error) {
-	log.Infof("Creando batches")
+	log.Debugf("Creando batches")
 	const maxBatchSize = 8192
 	const headerSize = 2
 
@@ -14,10 +14,10 @@ func CreateBatches(bets []Packet, maxAmount int) ([][]byte, error) {
 	currentBatchSize := headerSize
 
 	for _, bet := range bets {
-		log.Infof("Apuesta: %v", bet)
+		log.Debugf("Apuesta: %v", bet)
 		// Chequeo si se excede el tamaño máximo de batch o cantidad de paquetes
 		if currentBatchSize+bet.Size() > maxBatchSize || packetsInCurrentBatch >= maxAmount {
-			log.Infof("Creando nuevo batch.")
+			log.Debugf("Creando nuevo batch.")
 			// Serializo la longitud del batch (sin el header)
 			batchLength := make([]byte, headerSize)
 			binary.BigEndian.PutUint16(batchLength, uint16(currentBatchSize-headerSize))

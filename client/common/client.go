@@ -71,9 +71,9 @@ func (c *Client) createClientSocket() error {
 }
 
 func (c *Client) GracefulShutdown() {
-	log.Infof("Cerrando cliente...")
+	log.Debugf("Cerrando cliente...")
 	if c.conn != nil {
-		log.Infof("Cerrando conexión con el servidor...")
+		log.Debugf("Cerrando conexión con el servidor...")
 		c.conn.Close()
 	}
 }
@@ -160,12 +160,12 @@ func (c *Client) SendNotification() {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
-	// log.Infof("Lectura de csv")
+	log.Debugf("Lectura de csv")
 	bets, err := ReadBets(fmt.Sprintf("/.data/agency-%s.csv", c.config.ID))
 	if err != nil {
 		log.Errorf("error leyendo apuestas")
 	}
-	// log.Infof("Apuestas leídas: %v", bets)
+	log.Debugf("Apuestas leídas: %v", bets)
 
 	batches, err := CreateBatches(bets, c.config.BatchMaxAmount)
 	if err != nil {
@@ -195,7 +195,7 @@ func (c *Client) StartClientLoop() {
 			return
 		}
 
-		log.Infof("action: batch_enviado | result: success | batch_size: %d", len(batch))
+		log.Debugf("action: batch_enviado | result: success | batch_size: %d", len(batch))
 	}
 	c.SendNotification()
 	c.WaitForWinners()
