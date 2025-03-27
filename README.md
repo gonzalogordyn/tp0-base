@@ -9,4 +9,8 @@ Modificar el servidor para que permita aceptar conexiones y procesar mensajes en
 
 ## Resolución
 
-Decidí optar por multiprocesamiento para esquivar el GIL y poder aprovechar un paralelismo real.
+Decidí optar por multiprocesamiento para esquivar el GIL y poder aprovechar un paralelismo real. Por cada conexión entrante se lanza un proceso. 
+Tuve que hacer uso de un Manager de multiprocessing para poder compartir el diccionario que mappea a los ids de las agencias con sus ganadores correspondientes.  
+Utilicé locks para garantizar la exclusión mutua en operaciones peligrosas, como a la hora de escribir las apuestas, y a la hora de incrementar la cantidad de notificaciones recibidas.  
+Respecto a esto último, se handlearan las conexiones de los clientes de manera paralela, pero el último proceso en recibir la notificación de que se han mandado las apuestas será el que comience el sorteo. Se encargará de llamar a la función para leer las apuestas, y almacenará los ganadores de cada agencia en el diccionario mencionado previamente.  
+Luego de esto, a través de una cola de mensajes le comunicará al proceso principal que deje de escuchar conexiones entrantes, y que se encargue de comunicarle a cada una de las agencias sus ganadores (ya que es quien mantiene un diccionario que mapea a los ids con sus sockets).
