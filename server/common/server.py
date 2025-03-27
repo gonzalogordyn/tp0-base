@@ -23,8 +23,8 @@ class Server:
         """
 
         while True:
-            self.__accept_new_connection()
-            self.__handle_client_connection()
+            id = self.__accept_new_connection()
+            self.__handle_client_connection(id)
 
     def __recv_all_bytes(self):
         packet_bytes = b''
@@ -49,7 +49,7 @@ class Server:
             sent_bytes += sent
         return
 
-    def __handle_client_connection(self):
+    def __handle_client_connection(self, client_id):
         """
         Read message from a specific client socket and closes the socket
 
@@ -80,7 +80,7 @@ class Server:
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
-            self._client_socket.close()
+            self._client_socket[client_id].close()
 
     def __accept_new_connection(self):
         """
@@ -99,6 +99,8 @@ class Server:
         client_id = int.from_bytes(client_id_bytes, byteorder='big', signed=False)
         
         self._clients[client_id] = c
+
+        return client_id
     
     def graceful_shutdown(self):
         logging.info("Cerrando servidor...")
