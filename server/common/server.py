@@ -44,10 +44,10 @@ class Server:
         packet_bytes += packet_length_bytes
         packet_length = int.from_bytes(packet_length_bytes, byteorder='big', signed=False)
 
-        logging.debug(f"action: receive_message | length: {packet_length}")
+        # logging.debug(f"action: receive_message | length: {packet_length}")
 
         if packet_length == self.NOTIFY_FINISHED:
-            logging.info(f"action: Recibió un finished")
+            # logging.info(f"action: Recibió un finished")
             return packet_bytes, "FINISHED"
         
         while len(packet_bytes) - 2 < packet_length:
