@@ -6,12 +6,15 @@ from common.batch import Batch
 from common.utils import *
 
 class Server:
+    NOTIFY_FINISHED = 9000
     def __init__(self, port, listen_backlog):
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._clients = {}
+        self.__notified = 0
+        self.__ganadores = {}
 
     def run(self):
         """
@@ -31,13 +34,16 @@ class Server:
         packet_length_bytes = self._clients[id].recv(2)
         packet_bytes += packet_length_bytes
         packet_length = int.from_bytes(packet_length_bytes, byteorder='big', signed=False)
+
+        if packet_length == self.NOTIFY_FINISHED:
+            return None, "FINISHED"
         
         while len(packet_bytes) - 2 < packet_length:
             received = self._clients[id].recv(packet_length - len(packet_bytes) + 2)
             if not received:
                 return packet_bytes
             packet_bytes += received
-        return packet_bytes
+        return packet_bytes, "OK"
 
     def __write_all_bytes(self, data, id):
         sent_bytes = 0
@@ -48,6 +54,19 @@ class Server:
                 return
             sent_bytes += sent
         return
+    
+    def __handle_notificaciones(self):
+        self.__notified += 1
+        if self.__notified == 5:
+            logging.info("action: sorteo | result: success")
+            self.__handle_sorteo(self)
+
+    def __handle_sorteo(self):
+        bets = load_bets()
+        for bet in bets:
+            if has_won(bet):
+                self.__ganadores[bet.agency].append(bet)
+
 
     def __handle_client_connection(self, client_id):
         """
@@ -57,25 +76,29 @@ class Server:
         client socket will also be closed
         """
         try:
-            received_bytes = self.__recv_all_bytes(client_id)
+            received_bytes, status = self.__recv_all_bytes(client_id)
             logging.info(f'Received bytes: {received_bytes}')
-            batch, failed_packets = Batch.deserialize(received_bytes)
-            logging.info(f'Batch: {batch.packets}')
-            
-            for packet in batch.packets:
-                bet = Bet(0, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
-                store_bets([bet])
-                logging.info(f'action: apuesta_almacenada | result: success | nombre: {packet.nombre} {packet.apellido} | dni: {packet.documento} | numero: {packet.numero}')
-            
 
-            if failed_packets > 0:
-                logging.error(f'action: apuesta_recibida | result: fail | cantidad: {failed_packets}')
-                response = "ERR".encode('utf-8')
-                self.__write_all_bytes(response, client_id)
+            if status == "FINISHED":
+                self.__handle_notificaciones()
             else:
-                logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(batch.packets)}')
-                response = "ACK".encode('utf-8')
-                self.__write_all_bytes(response, client_id)
+                batch, failed_packets = Batch.deserialize(received_bytes)
+                logging.info(f'Batch: {batch.packets}')
+                
+                for packet in batch.packets:
+                    bet = Bet(client_id, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
+                    store_bets([bet])
+                    logging.info(f'action: apuesta_almacenada | result: success | nombre: {packet.nombre} {packet.apellido} | dni: {packet.documento} | numero: {packet.numero}')
+                
+
+                if failed_packets > 0:
+                    logging.error(f'action: apuesta_recibida | result: fail | cantidad: {failed_packets}')
+                    response = "ERR".encode('utf-8')
+                    self.__write_all_bytes(response, client_id)
+                else:
+                    logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(batch.packets)}')
+                    response = "ACK".encode('utf-8')
+                    self.__write_all_bytes(response, client_id)
                 
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
@@ -97,10 +120,11 @@ class Server:
         
         client_id_bytes = c.recv(1)
         client_id = int.from_bytes(client_id_bytes, byteorder='big', signed=False)
+        client_id_str = str(client_id)
         
-        self._clients[client_id] = c
+        self._clients[client_id_str] = c
 
-        return client_id
+        return client_id_str
     
     def graceful_shutdown(self):
         logging.info("Cerrando servidor...")
