@@ -59,19 +59,24 @@ class Server:
         try:
             received_bytes = self.__recv_all_bytes()
             logging.info(f'Received bytes: {received_bytes}')
-            batch = Batch.deserialize(received_bytes)
-
+            batch, failed_packets = Batch.deserialize(received_bytes)
+            logging.info(f'Batch: {batch.packets}')
+            
             for packet in batch.packets:
                 bet = Bet(0, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
                 store_bets([bet])
-                logging.info(f'action: apuesta_almacenada | result: success | dni: {packet.documento} | numero: {packet.numero}')
+                logging.info(f'action: apuesta_almacenada | result: success | nombre: {packet.nombre} {packet.apellido} | dni: {packet.documento} | numero: {packet.numero}')
             
-            # Creo la respuesta
-            response = b''
-            response += "ACK".encode('utf-8')
-            # response += packet.numero.to_bytes(4, byteorder='big', signed=False)
 
-            self.__write_all_bytes(response)
+            if failed_packets > 0:
+                logging.error(f'action: apuesta_recibida | result: fail | cantidad: {failed_packets}')
+                response = "ERR".encode('utf-8')
+                self.__write_all_bytes(response)
+            else:
+                logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(batch.packets)}')
+                response = "ACK".encode('utf-8')
+                self.__write_all_bytes(response)
+                
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:

@@ -61,7 +61,7 @@ func (c *Client) GracefulShutdown() {
 
 func (c *Client) WriteAllBytes(data []byte) error {
 	totalSent := 0
-	log.Infof("Bytes enviados: %x", data)
+	// log.Infof("Bytes enviados: %x", data)
 	for totalSent < len(data) {
 		sent, err := c.conn.Write(data[totalSent:])
 		if err != nil {
@@ -104,12 +104,12 @@ func (c *Client) StartClientLoop() {
 	if err != nil {
 		log.Errorf("error creando batches")
 	}
+	log.Debugf("Batches creados: %v", batches)
 
 	c.createClientSocket()
 
 	for _, batch := range batches {
 		// Escribo con funcion auxiliar para evitar short write
-		log.Infof("Enviando de batch")
 		err = c.WriteAllBytes(batch)
 		if err != nil {
 			log.Errorf("error enviando paquete")
