@@ -6,6 +6,7 @@ from common.packet import Packet
 from common.batch import Batch
 from common.utils import *
 from common.winners_packet import WinnersPacket
+import sys
 
 class Server:
     NOTIFY_FINISHED = 9000
