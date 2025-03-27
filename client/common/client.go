@@ -143,7 +143,7 @@ func (c *Client) WaitForWinners() {
 	}
 
 	// Log the winners
-	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d | source: client%d", len(winnersPacket.Winners))
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d", len(winnersPacket.Winners))
 }
 
 func (c *Client) SendNotification() {
