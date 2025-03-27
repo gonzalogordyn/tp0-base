@@ -15,7 +15,6 @@ func CreateBatches(bets []Packet, maxAmount int) ([][]byte, error) {
 
 	for _, bet := range bets {
 		log.Infof("Apuesta: %v", bet)
-		log.Infof("batches: %v", batches)
 		// Chequeo si se excede el tamaño máximo de batch o cantidad de paquetes
 		if currentBatchSize+bet.Size() > maxBatchSize || packetsInCurrentBatch >= maxAmount {
 			log.Infof("Creando nuevo batch.")

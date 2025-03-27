@@ -1,40 +1,42 @@
 name: tp0
-services:
-  server:
-    container_name: server
-    image: server:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
-    networks:
-      - testing_net
-    volumes:
-      - type: bind
-        source: ./server/config.ini
-        target: /config.ini
-
-  client1:
-    container_name: client1
-    image: client:latest
-    entrypoint: /client
-    environment:
-      - CLI_ID=1
-      - CLI_LOG_LEVEL=DEBUG
-    networks:
-      - testing_net
-    depends_on:
-      - server
-    volumes:
-      - type: bind
-        source: ./client/config.yaml
-        target: /config.yaml
-
 networks:
   testing_net:
     ipam:
-      driver: default
       config:
-        - subnet: 172.25.125.0/24
-volumes:
-  myapp:
+      - subnet: 172.25.125.0/24
+      driver: default
+services:
+  client1:
+    container_name: client1
+    depends_on:
+    - server
+    entrypoint: /client
+    environment:
+    - CLI_ID=1
+    - NOMBRE=Nombre
+    - APELLIDO=Apellido
+    - DOCUMENTO=12345678
+    - NACIMIENTO=1950-01-01
+    - NUMERO=1234
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - source: ./client/config.yaml
+      target: /config.yaml
+      type: bind
+    - source: ./.data/agency-1.csv
+      target: /.data/agency-1.csv
+      type: bind
+  server:
+    container_name: server
+    entrypoint: python3 /main.py
+    environment:
+    - PYTHONUNBUFFERED=1
+    image: server:latest
+    networks:
+    - testing_net
+    volumes:
+    - source: ./server/config.ini
+      target: /config.ini
+      type: bind

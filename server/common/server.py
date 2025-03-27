@@ -26,23 +26,23 @@ class Server:
             id = self.__accept_new_connection()
             self.__handle_client_connection(id)
 
-    def __recv_all_bytes(self):
+    def __recv_all_bytes(self, id):
         packet_bytes = b''
-        packet_length_bytes = self._client_socket.recv(2)
+        packet_length_bytes = self._clients[id].recv(2)
         packet_bytes += packet_length_bytes
         packet_length = int.from_bytes(packet_length_bytes, byteorder='big', signed=False)
         
         while len(packet_bytes) - 2 < packet_length:
-            received = self._client_socket.recv(packet_length - len(packet_bytes) + 2)
+            received = self._clients[id].recv(packet_length - len(packet_bytes) + 2)
             if not received:
                 return packet_bytes
             packet_bytes += received
         return packet_bytes
 
-    def __write_all_bytes(self, data):
+    def __write_all_bytes(self, data, id):
         sent_bytes = 0
         while sent_bytes < len(data):
-            sent = self._client_socket.send(data[sent_bytes:])
+            sent = self._clients[id].send(data[sent_bytes:])
             if sent == 0:
                 logging.error("Error al enviar datos")
                 return
@@ -57,7 +57,7 @@ class Server:
         client socket will also be closed
         """
         try:
-            received_bytes = self.__recv_all_bytes()
+            received_bytes = self.__recv_all_bytes(client_id)
             logging.info(f'Received bytes: {received_bytes}')
             batch, failed_packets = Batch.deserialize(received_bytes)
             logging.info(f'Batch: {batch.packets}')
@@ -71,16 +71,16 @@ class Server:
             if failed_packets > 0:
                 logging.error(f'action: apuesta_recibida | result: fail | cantidad: {failed_packets}')
                 response = "ERR".encode('utf-8')
-                self.__write_all_bytes(response)
+                self.__write_all_bytes(response, client_id)
             else:
                 logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(batch.packets)}')
                 response = "ACK".encode('utf-8')
-                self.__write_all_bytes(response)
+                self.__write_all_bytes(response, client_id)
                 
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
-            self._client_socket[client_id].close()
+            self._clients[client_id].close()
 
     def __accept_new_connection(self):
         """
@@ -95,7 +95,7 @@ class Server:
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         
-        client_id_bytes = self.__recv_all_bytes(1)
+        client_id_bytes = c.recv(1)
         client_id = int.from_bytes(client_id_bytes, byteorder='big', signed=False)
         
         self._clients[client_id] = c
