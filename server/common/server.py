@@ -165,3 +165,4 @@ class Server:
 
         logging.debug("Cerrando socket del servidor")
         self._server_socket.close()
+        sys.exit(0)
