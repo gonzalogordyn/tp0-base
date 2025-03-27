@@ -101,7 +101,7 @@ class Server:
                 # logging.info(f'Received bytes: {received_bytes}')
 
                 if status == "FINISHED":
-                    # logging.info("action: notificacion | result: success")
+                    logging.info(f"action: notificacion | result: success | client: {client_id}")
                     self.__handle_notificaciones()
                     break
                 else:
