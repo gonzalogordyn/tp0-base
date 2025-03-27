@@ -57,9 +57,17 @@ def main():
                   f"listen_backlog: {listen_backlog} | logging_level: {logging_level}")
 
     # Initialize server and start server loop
+
+    num_agencias = 5
+    try:
+        num_agencias = int(os.getenv("AGENCIAS", 5))
+    except ValueError:
+        logging.error("Valor inválido.")
+        raise
+
     global server
     with Manager() as manager:
-        ganadores = manager.dict({str(i): [] for i in range(1, 6)})  # Replace 6 with the number of agencies
+        ganadores = manager.dict({str(i): manager.list() for i in range(1, num_agencias + 1)})
         server = Server(port, listen_backlog, ganadores)
         server.run()
     

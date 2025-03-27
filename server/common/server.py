@@ -36,8 +36,10 @@ class Server:
         Por cada conexión se lanza un nuevo proceso.
         El main process se va a encargar de comunicarle al resto los ganadores.
         """
+
+        procesos = []
+
         while True:
-            logging.debug("queue size: %s", self._queue.qsize())
             if not self._queue.empty():
                 message = self._queue.get()
                 if message == "EXIT":
@@ -49,7 +51,12 @@ class Server:
             if client_id is not None and client_socket is not None:
                 process = Process(target=self.__handle_client_connection, args=(client_id, client_socket))
                 process.start()
+                procesos.append
         
+        for process in procesos:
+            process.join()
+        
+        logging.debug("self._ganadores.items(): %s", self._ganadores.items())
         for agency, winners in self._ganadores.items():
             winners_packet = WinnersPacket(winners)
             winners_bytes = winners_packet.serialize()
@@ -66,7 +73,7 @@ class Server:
         packet_bytes += packet_length_bytes
         packet_length = int.from_bytes(packet_length_bytes, byteorder='big', signed=False)
 
-        logging.debug(f"Longitud del paquete recibido: {packet_length}")
+        # logging.debug(f"Longitud del paquete recibido: {packet_length}")
         if packet_length == self.NOTIFY_FINISHED:
             return packet_bytes, "FINISHED"
         
@@ -97,11 +104,16 @@ class Server:
     def __handle_sorteo(self):
         bets = load_bets()
         for bet in bets:
+            # logging.debug("Bet: %s %s %s", bet.first_name, bet.last_name, bet.number)
             if has_won(bet):
+                # logging.debug("Ganador: %s %s %s", bet.first_name, bet.last_name, bet.number)
+                # logging.debug("Agregando a agencia %s", bet.agency)
                 agency_key = str(bet.agency)
-                with self._lock:
-                    self._ganadores[agency_key].append(bet.document)
+
+                self._ganadores[agency_key].append(bet.document)
+
         logging.debug(f"Poniendo EXIT en queue")
+        # logging.debug("Ganadores: %s", self._ganadores)
         self._queue.put("EXIT")
 
     def __handle_client_connection(self, client_id, client_socket):
@@ -121,13 +133,14 @@ class Server:
                 else:
                     batch, failed_packets = Batch.deserialize(received_bytes)
                     bets = []
+                    # logging.debug("Cantidad de paquetes en batch: %s", len(batch.packets))
                     for packet in batch.packets:
                         bet = Bet(client_id, packet.nombre, packet.apellido, packet.documento, packet.nacimiento, packet.numero)
-                        bets = []
                         bets.append(bet)
                     
                     with self._lock:
-                        store_bets([bet])
+                        # logging.debug("Almacenando %s apuestas", len(bets))
+                        store_bets(bets)
 
                     if failed_packets > 0:
                         logging.error(f'action: apuesta_recibida | result: fail | cantidad: {failed_packets}')
