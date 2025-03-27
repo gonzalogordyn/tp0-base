@@ -17,7 +17,6 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._clients = {}
         self._notified = 0
-        self._ganadores = {str(i): [] for i in range(1, 6)}
 
         try:
             self._num_agencias = int(os.getenv("AGENCIAS", 5))
@@ -25,6 +24,7 @@ class Server:
         except ValueError:
             logging.error("Valor inválido.")
             raise
+        self._ganadores = {str(i): [] for i in range(1, self._num_agencias + 1)}
 
     def run(self):
         """
