@@ -59,6 +59,8 @@ class Server:
         return packet_bytes, "OK"
 
     def __write_all_bytes(self, data, id):
+        logging.debug(f"sending message to client {str(id)}")
+        logging.debug(f"clients: {self._clients}")
         sent_bytes = 0
         while sent_bytes < len(data):
             sent = self._clients[id].send(data[sent_bytes:])
