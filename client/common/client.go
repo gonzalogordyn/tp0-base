@@ -160,18 +160,18 @@ func (c *Client) SendNotification() {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
-	log.Infof("Lectura de csv")
+	// log.Infof("Lectura de csv")
 	bets, err := ReadBets(fmt.Sprintf("/.data/agency-%s.csv", c.config.ID))
 	if err != nil {
 		log.Errorf("error leyendo apuestas")
 	}
-	log.Infof("Apuestas leídas: %v", bets)
+	// log.Infof("Apuestas leídas: %v", bets)
 
 	batches, err := CreateBatches(bets, c.config.BatchMaxAmount)
 	if err != nil {
 		log.Errorf("error creando batches")
 	}
-	log.Debugf("Batches creados: %v", batches)
+	// log.Debugf("Batches creados: %v", batches)
 
 	c.createClientSocket()
 
