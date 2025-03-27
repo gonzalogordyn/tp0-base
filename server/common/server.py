@@ -21,7 +21,7 @@ class Server:
 
         try:
             self._num_agencias = int(os.getenv("AGENCIAS", 5))
-            logging.debug(f"Cantidad de agencias: {self._num_agencias}")
+            # logging.debug(f"Cantidad de agencias: {self._num_agencias}")
         except ValueError:
             logging.error("Valor inválido.")
             raise
@@ -49,7 +49,7 @@ class Server:
         # logging.debug(f"action: receive_message | length: {packet_length}")
 
         if packet_length == self.NOTIFY_FINISHED:
-            logging.debug(f"action: Recibió un finished")
+            # logging.debug(f"action: Recibió un finished")
             return packet_bytes, "FINISHED"
         
         while len(packet_bytes) - 2 < packet_length:
@@ -60,8 +60,8 @@ class Server:
         return packet_bytes, "OK"
 
     def __write_all_bytes(self, data, id):
-        logging.debug(f"sending message to client {str(id)}")
-        logging.debug(f"clients: {self._clients}")
+        # logging.debug(f"sending message to client {str(id)}")
+        # logging.debug(f"clients: {self._clients}")
         sent_bytes = 0
         while sent_bytes < len(data):
             sent = self._clients[id].send(data[sent_bytes:])
@@ -105,7 +105,7 @@ class Server:
                 # logging.info(f'Received bytes: {received_bytes}')
 
                 if status == "FINISHED":
-                    logging.info(f"action: notificacion | result: success | client: {client_id}")
+                    # logging.info(f"action: notificacion | result: success | client: {client_id}")
                     self.__handle_notificaciones()
                     break
                 else:
