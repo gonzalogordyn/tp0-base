@@ -11,7 +11,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
-        self._client_socket = None
+        self._clients = {}
 
     def run(self):
         """
@@ -23,7 +23,7 @@ class Server:
         """
 
         while True:
-            self._client_socket = self.__accept_new_connection()
+            self.__accept_new_connection()
             self.__handle_client_connection()
 
     def __recv_all_bytes(self):
@@ -94,14 +94,23 @@ class Server:
         logging.info('action: accept_connections | result: in_progress')
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-        return c
+        
+        client_id_bytes = self.__recv_all_bytes(1)
+        client_id = int.from_bytes(client_id_bytes, byteorder='big', signed=False)
+        
+        self._clients[client_id] = c
     
     def graceful_shutdown(self):
         logging.info("Cerrando servidor...")
         
-        if self._client_socket:
-            logging.info(f"Cerrando socket de cliente")
-            self._client_socket.close()
+        for client_id, client_socket in self._clients.items():
+            try:
+                logging.info(f"Cerrando socket del cliente con ID: {client_id}")
+                client_socket.close()
+            except Exception as e:
+                logging.error(f"Error cerrando socket del cliente con ID: {client_id} | Error: {e}")
         
+        self._clients.clear()
+
         logging.info("Cerrando socket del servidor")
         self._server_socket.close()

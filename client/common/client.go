@@ -48,6 +48,15 @@ func (c *Client) createClientSocket() error {
 		)
 	}
 	c.conn = conn
+
+	// Envio id del cliente
+	err = c.WriteAllBytes([]byte(c.config.ID))
+	if err != nil {
+		log.Errorf("error enviando id de cliente")
+		c.conn.Close()
+		return err
+	}
+
 	return nil
 }
 
