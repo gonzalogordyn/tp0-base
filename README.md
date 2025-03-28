@@ -20,3 +20,4 @@ Luego de esto, a través de una cola de mensajes le comunicará al proceso princ
 
 - Arreglé el tema de no cargar el archivo entero, sino de ir leyendo de a chunks. Directamente leo la cantidad máxima de apuestas en un batch y armo el paquete para mandarlo, esperar el ACK, y seguir leyendo desde donde me quedé. 
 - Arreglé de que los bytes del header se lean con la función auxiliar para evitar short read.
+- Se crea un proceso aparte para monitorear la cola que espera el mensaje de que el sorteo se ha realizado para terminar la ejecución.

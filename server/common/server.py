@@ -2,7 +2,7 @@ import os
 import socket
 import logging
 import signal
-from multiprocessing import Process, Manager, Lock, Queue, Value
+from multiprocessing import Process, Manager, Lock, Queue, Value, Event
 from common.packet import Packet
 from common.batch import Batch
 from common.utils import *
@@ -22,6 +22,7 @@ class Server:
         self._queue = Queue()
         self._notified = Value('i', 0)
         self._ganadores = ganadores
+        self._stop_event = Event()
 
         try:
             self._num_agencias = int(os.getenv("AGENCIAS", 5))
@@ -38,33 +39,43 @@ class Server:
         """
 
         procesos = []
+        queue_process = Process(target=self.__monitor_queue)
+        queue_process.start()
 
+        try:
+            while not self._stop_event.is_set():
+                client_id, client_socket = self.__accept_new_connection()
+
+                if client_id is not None and client_socket is not None:
+                    process = Process(target=self.__handle_client_connection, args=(client_id, client_socket))
+                    process.start()
+                    procesos.append(process)
+        finally:
+            for process in procesos:
+                process.join()
+
+            queue_process.join()
+            logging.debug("self._ganadores.items(): %s", self._ganadores.items())
+            for agency, winners in self._ganadores.items():
+                winners_packet = WinnersPacket(winners)
+                winners_bytes = winners_packet.serialize()
+
+                agency_socket = self._clients.get(agency)
+                self.__write_all_bytes(winners_bytes, agency_socket)
+            
+            self.graceful_shutdown()        
+
+    def __monitor_queue(self):
+        """
+        Monitorea la cola de mensajes y lanza evento para frenar proceso principal
+        """
         while True:
             if not self._queue.empty():
                 message = self._queue.get()
                 if message == "EXIT":
                     logging.debug("Sorteo terminado")
+                    self._stop_event.set()
                     break
-
-            client_id, client_socket = self.__accept_new_connection()
-            
-            if client_id is not None and client_socket is not None:
-                process = Process(target=self.__handle_client_connection, args=(client_id, client_socket))
-                process.start()
-                procesos.append
-        
-        for process in procesos:
-            process.join()
-        
-        logging.debug("self._ganadores.items(): %s", self._ganadores.items())
-        for agency, winners in self._ganadores.items():
-            winners_packet = WinnersPacket(winners)
-            winners_bytes = winners_packet.serialize()
-
-            agency_socket = self._clients.get(agency)
-            self.__write_all_bytes(winners_bytes, agency_socket)
-        
-        self.graceful_shutdown()
         
 
     def __recv_all_bytes(self, client_socket, expected_bytes):
