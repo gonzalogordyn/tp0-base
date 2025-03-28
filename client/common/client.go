@@ -165,6 +165,8 @@ func (c *Client) StartClientLoop() {
 	linesRead := 0
 
 	c.createClientSocket()
+
+	// Este limite lo meti solo para no mandar 10 mil batches, si llega a EOF breakea porque bets va a tener 0
 	for linesRead < 150 {
 		bets, newStartLine, err := ReadBets(fmt.Sprintf("/.data/agency-%s.csv", c.config.ID), startLine, c.config.BatchMaxAmount)
 		if len(bets) == 0 {
