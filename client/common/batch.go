@@ -51,3 +51,35 @@ func CreateBatches(bets []Packet, maxAmount int) ([][]byte, error) {
 
 	return batches, nil
 }
+
+func CreateBatch(bets []Packet, maxAmount int) ([]byte, error) {
+	log.Debugf("Creando batch")
+	const maxBatchSize = 8192
+	const headerSize = 2
+
+	var batch []byte
+	currentBatchSize := headerSize
+
+	for _, bet := range bets {
+		log.Debugf("Apuesta: %v", bet)
+
+		serializedBet, err := bet.Serialize()
+		if err != nil {
+			return nil, err
+		}
+
+		batch = append(batch, serializedBet...)
+		currentBatchSize += len(serializedBet)
+	}
+
+	if len(batch) > 0 {
+		// Serializo la longitud del batch (sin el header)
+		batchLength := make([]byte, headerSize)
+		binary.BigEndian.PutUint16(batchLength, uint16(currentBatchSize-headerSize))
+
+		// Agrego el header al batch y appendeo
+		batch = append(batchLength, batch...)
+	}
+
+	return batch, nil
+}

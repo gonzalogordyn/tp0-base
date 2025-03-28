@@ -80,7 +80,7 @@ func (c *Client) GracefulShutdown() {
 
 func (c *Client) WriteAllBytes(data []byte) error {
 	totalSent := 0
-	// log.Infof("Bytes enviados: %x", data)
+	log.Debugf("Enviando batch desde cliente %d", c.config.ID)
 	for totalSent < len(data) {
 		sent, err := c.conn.Write(data[totalSent:])
 		if err != nil {
@@ -161,21 +161,27 @@ func (c *Client) SendNotification() {
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
 	log.Debugf("Lectura de csv")
-	bets, err := ReadBets(fmt.Sprintf("/.data/agency-%s.csv", c.config.ID))
-	if err != nil {
-		log.Errorf("error leyendo apuestas")
-	}
-	log.Debugf("Apuestas leídas: %v", bets)
-
-	batches, err := CreateBatches(bets, c.config.BatchMaxAmount)
-	if err != nil {
-		log.Errorf("error creando batches")
-	}
-	// log.Debugf("Batches creados: %v", batches)
+	startLine := 0
+	linesRead := 0
 
 	c.createClientSocket()
+	for linesRead < 150 {
+		bets, newStartLine, err := ReadBets(fmt.Sprintf("/.data/agency-%s.csv", c.config.ID), startLine, c.config.BatchMaxAmount)
+		if len(bets) == 0 {
+			break
+		}
 
-	for _, batch := range batches {
+		if err != nil {
+			log.Errorf("error leyendo apuestas")
+		}
+		log.Debugf("Apuestas leídas: %v", bets)
+
+		batch, err := CreateBatch(bets, c.config.BatchMaxAmount)
+		if err != nil {
+			log.Errorf("error creando batches")
+		}
+		// log.Debugf("Batches creados: %v", batches)
+
 		// Escribo con funcion auxiliar para evitar short write
 		err = c.WriteAllBytes(batch)
 		if err != nil {
@@ -194,8 +200,10 @@ func (c *Client) StartClientLoop() {
 			log.Errorf("error recibiendo respuesta")
 			return
 		}
-
+		linesRead += len(bets)
+		startLine = newStartLine
 		log.Debugf("action: batch_enviado | result: success | batch_size: %d", len(batch))
+
 	}
 	c.SendNotification()
 	c.WaitForWinners()
