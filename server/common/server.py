@@ -67,20 +67,14 @@ class Server:
         self.graceful_shutdown()
         
 
-    def __recv_all_bytes(self, client_socket):
+    def __recv_all_bytes(self, client_socket, expected_bytes):
         packet_bytes = b''
-        packet_length_bytes = client_socket.recv(2)
-        packet_bytes += packet_length_bytes
-        packet_length = int.from_bytes(packet_length_bytes, byteorder='big', signed=False)
-
         # logging.debug(f"Longitud del paquete recibido: {packet_length}")
-        if packet_length == self.NOTIFY_FINISHED:
-            return packet_bytes, "FINISHED"
         
-        while len(packet_bytes) - 2 < packet_length:
-            received = client_socket.recv(packet_length - len(packet_bytes) + 2)
+        while len(packet_bytes) < expected_bytes:
+            received = client_socket.recv(expected_bytes - len(packet_bytes))
             if not received:
-                return packet_bytes
+                return packet_bytes, None
             packet_bytes += received
         return packet_bytes, "OK"
 
@@ -125,13 +119,18 @@ class Server:
         """
         try:
             while True:
-                received_bytes, status = self.__recv_all_bytes(client_socket)
+                packet_bytes = b''
+                header_bytes, err = self.__recv_all_bytes(client_socket, 2)
+                packet_bytes += header_bytes
+                packet_length = int.from_bytes(header_bytes, byteorder='big', signed=False)
 
-                if status == "FINISHED":
+                if packet_length == self.NOTIFY_FINISHED:
                     self.__handle_notificaciones()
                     break
                 else:
-                    batch, failed_packets = Batch.deserialize(received_bytes)
+                    received_bytes, err = self.__recv_all_bytes(client_socket, packet_length)
+                    packet_bytes += received_bytes
+                    batch, failed_packets = Batch.deserialize(packet_bytes)
                     bets = []
                     # logging.debug("Cantidad de paquetes en batch: %s", len(batch.packets))
                     for packet in batch.packets:
@@ -162,7 +161,7 @@ class Server:
             client_socket, addr = self._server_socket.accept()
             logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
             
-            client_id_bytes = client_socket.recv(1)
+            client_id_bytes, err = self.__recv_all_bytes(client_socket, 1)
             client_id = int.from_bytes(client_id_bytes, byteorder='big', signed=False)
             client_id_str = str(client_id)
 
